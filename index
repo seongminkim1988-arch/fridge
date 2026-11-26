@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>우리집 냉장고 & 아기 식단</title>
+<style>
+:root{--bg:#fdf8f3;--card:#fff;--ink:#3b3530;--sub:#8a7f75;--line:#efe6dc;--main:#ff8a65;--main2:#ffd3c2;--mint:#4db6ac;--mint2:#d9f2ef;--red:#e53935;--red2:#ffe3e1;--org:#fb8c00;--org2:#fff0d9;--yel:#f9c74f;--blue:#5c8df6;--blue2:#e6eeff}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+header{background:linear-gradient(135deg,#ffb199,#ff8a65);color:#fff;padding:18px 16px 14px}
+header h1{margin:0;font-size:20px}
+header p{margin:4px 0 0;font-size:13px;opacity:.95}
+#alertBar{display:none;margin:10px 12px 0;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer}
+#alertBar.bad{display:block;background:var(--red2);color:var(--red)}
+#alertBar.warn{display:block;background:var(--org2);color:var(--org)}
+nav{display:flex;gap:6px;padding:10px 12px;position:sticky;top:0;background:var(--bg);z-index:5;overflow-x:auto;border-bottom:1px solid var(--line)}
+nav button{flex:0 0 auto;border:0;background:#fff;padding:9px 14px;border-radius:999px;font-size:14px;cursor:pointer;color:var(--sub);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+nav button.on{background:var(--main);color:#fff;font-weight:700}
+main{max-width:1250px;margin:0 auto;padding:12px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card h2{margin:0 0 12px;font-size:17px}
+.card h3{margin:14px 0 8px;font-size:15px}
+.muted{color:var(--sub);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,textarea{font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--main2);border-color:var(--main)}
+button.b{border:0;border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer;background:#f3ece5;color:var(--ink)}
+button.b.p{background:var(--main);color:#fff;font-weight:700}
+button.b.m{background:var(--mint);color:#fff}
+button.b.s{padding:6px 10px;font-size:13px}
+button.b:active{transform:scale(.97)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--main);color:var(--main)}
+.chip.on{background:var(--main);color:#fff;border-color:var(--main)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+/* fridge form */
+.addf{display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr 1.4fr auto;gap:8px;align-items:center}
+@media(max-width:820px){.addf{grid-template-columns:1fr 1fr}.addf .nm{grid-column:1/-1}.addf .ad{grid-column:1/-1}}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;background:#fff;padding:10px 6px;cursor:pointer;font:inherit;font-size:13px}
+.seg button.on{background:var(--mint);color:#fff;font-weight:700}
+.hint{font-size:12px;color:var(--mint);min-height:16px;margin-top:6px}
+/* items */
+.items{display:flex;flex-direction:column;gap:8px}
+.it{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff}
+.it.expired{background:var(--red2);border-color:#f5b5b0}
+.it.soon{background:var(--org2);border-color:#ffd59e}
+.it .em{font-size:24px}
+.it .nm{flex:1;min-width:0}
+.it .nm b{display:block;font-size:15px}
+.it .nm span{font-size:12px;color:var(--sub)}
+.dd{font-weight:800;font-size:13px;padding:5px 9px;border-radius:8px;white-space:nowrap}
+.dd.expired{background:var(--red);color:#fff}.dd.soon{background:var(--org);color:#fff}.dd.week{background:var(--yel);color:#5a4500}.dd.ok{background:var(--mint2);color:#00796b}
+.it .ac{display:flex;gap:4px}
+.it .ac button{border:0;background:#f3ece5;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:13px}
+.empty{text-align:center;padding:24px;color:var(--sub)}
+.stat{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.stat div{flex:1;min-width:90px;background:#faf5ef;border-radius:12px;padding:10px;text-align:center;cursor:pointer}
+.stat b{display:block;font-size:22px}
+/* plan */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+@media(max-width:1000px){.week{grid-template-columns:1fr}}
+.day{background:#fff;border-radius:14px;border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column}
+.day.today{border:2px solid var(--main)}
+.day.past{opacity:.6}
+.dh{padding:8px 10px;background:#faf5ef;font-weight:700;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.dh .tg{font-size:11px;background:var(--main);color:#fff;border-radius:6px;padding:2px 6px}
+.dh .sat{color:var(--blue)}.dh .sun{color:var(--red)}
+.slot{padding:8px 10px;border-top:1px solid var(--line);font-size:13px;position:relative}
+.slot.dc{background:#f7f7f9;color:#666}
+.slot.home{background:#fff}
+.slot .sl{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:2px}
+.slot.home .sl{color:var(--main)}
+.slot .sm{line-height:1.4}
+.slot.home .sm{font-weight:600}
+.slot .why{font-size:11px;color:var(--mint);margin-top:3px;line-height:1.35}
+.slot .sa{position:absolute;top:5px;right:6px;display:flex;gap:2px}
+.slot .sa button{border:0;background:transparent;cursor:pointer;font-size:13px;padding:2px 3px;opacity:.55}
+.slot .sa button:hover{opacity:1}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin:6px 0 10px}
+.tip{background:var(--mint2);color:#00695c;border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px;line-height:1.5}
+/* today */
+.tmeal{display:flex;gap:10px;padding:10px;border-radius:12px;margin-bottom:6px;align-items:flex-start}
+.tmeal.home{background:#fff4ef}.tmeal.dc{background:#f5f5f7}
+.tmeal .k{width:78px;flex:0 0 78px;font-size:12px;font-weight:700;color:var(--sub)}
+.tmeal.home .k{color:var(--main)}
+.rec{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+.rec b{display:block}.rec span{font-size:12px;color:var(--mint)}
+/* shop */
+.shop{display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px dashed var(--line)}
+.shop.done{opacity:.45;text-decoration:line-through}
+.shop input{width:20px;height:20px}
+.shop .nm{flex:1}.shop .nm span{display:block;font-size:12px;color:var(--sub)}
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+#modal.on{display:flex}
+#modal .box{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:86vh;overflow:auto;padding:18px}
+#modal label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
+#modal input,#modal select,#modal textarea{width:100%}
+.cand{padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;cursor:pointer}
+.cand:hover{border-color:var(--main)}
+.cand small{display:block;color:var(--sub);font-size:12px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;display:none;z-index:60}
+.alg{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.alg label{font-size:13px;display:flex;gap:5px;align-items:center;background:#faf5ef;border-radius:8px;padding:6px 8px;cursor:pointer}
+@media print{header,nav,#alertBar,.noprint,.slot .sa{display:none!important}section{display:none!important}#tab-plan{display:block!important}.week{grid-template-columns:repeat(7,1fr)!important}.day{break-inside:avoid}body{background:#fff;font-size:11px}.card{box-shadow:none;padding:0}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧊 우리집 냉장고 & 🍚 <span id="hName">우리 아기</span> 식단</h1>
+  <p id="hSub"></p>
+</header>
+<div id="alertBar" onclick="go('fridge');setFilter('alert')"></div>
+<nav>
+  <button data-t="today" class="on" onclick="go('today')">🏠 오늘</button>
+  <button data-t="fridge" onclick="go('fridge')">🧊 냉장고</button>
+  <button data-t="plan" onclick="go('plan')">🍚 주간 식단</button>
+  <button data-t="shop" onclick="go('shop')">🛒 장보기</button>
+  <button data-t="set" onclick="go('set')">⚙️ 설정</button>
+</nav>
+<main>
+
+<!-- 오늘 -->
+<section id="tab-today" class="on">
+  <div class="grid2">
+    <div class="card"><h2 id="todayTitle">오늘의 식단</h2><div id="todayMeals"></div>
+      <div class="row noprint" style="margin-top:8px"><button class="b s" onclick="go('plan')">주간 식단 전체 보기 →</button></div></div>
+    <div>
+      <div class="card"><h2>⏰ 유통기한 알림</h2><div id="todayAlerts"></div></div>
+      <div class="card"><h2>♻️ 임박 재료로 만들 수 있는 메뉴</h2><div class="muted" style="margin-bottom:8px">오늘 어린이집 점심과 단백질이 겹치지 않는 메뉴만 추천해요.</div><div id="todayRec"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 냉장고 -->
+<section id="tab-fridge">
+  <div class="card">
+    <h2>➕ 재료 빠르게 추가</h2>
+    <div class="addf">
+      <input class="nm" id="fName" list="dlNames" placeholder="재료 이름 (예: 두부, 한우 다짐육)" autocomplete="off">
+      <input id="fQty" type="number" min="0" step="0.5" value="1" title="수량">
+      <select id="fUnit"><option>개</option><option>팩</option><option>봉</option><option>g</option><option>ml</option><option>통</option></select>
+      <div class="seg" id="fLoc"><button data-v="냉장" class="on">냉장</button><button data-v="냉동">냉동</button><button data-v="실온">실온</button></div>
+      <input id="fExp" type="date" title="유통기한">
+      <button class="b p ad" onclick="addFromForm()">추가</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="muted">유통기한 빠른 선택:</span>
+      <button class="chip" onclick="setExp(1)">+1일</button><button class="chip" onclick="setExp(3)">+3일</button><button class="chip" onclick="setExp(7)">+1주</button><button class="chip" onclick="setExp(14)">+2주</button><button class="chip" onclick="setExp(30)">+1달</button><button class="chip" onclick="setExp(90)">+3달</button>
+    </div>
+    <div class="hint" id="fHint">💡 이름만 입력하고 Enter → 품목별 권장 보관기간으로 유통기한이 자동 입력돼요. (포장지 날짜가 있으면 그 날짜로 바꿔주세요)</div>
+    <h3>자주 사는 재료 (탭하면 자동 입력)</h3>
+    <div class="chips" id="quickChips"></div>
+  </div>
+
+  <div class="card">
+    <h2>📦 냉장고 재고</h2>
+    <div class="stat" id="fStat"></div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="chips" id="locFilter"></div>
+      <input id="fSearch" placeholder="🔍 검색" style="flex:1;min-width:140px" oninput="renderFridge()">
+    </div>
+    <div class="items" id="fList"></div>
+  </div>
+</section>
+
+<!-- 식단 -->
+<section id="tab-plan">
+  <div class="card">
+    <div class="row noprint" style="justify-content:space-between">
+      <div class="row">
+        <button class="b s" onclick="moveWeek(-7)">◀ 이전 주</button>
+        <b id="weekLabel"></b>
+        <button class="b s" onclick="moveWeek(7)">다음 주 ▶</button>
+        <button class="b s" onclick="curWeek=mondayOf(today());renderPlan()">이번 주</button>
+      </div>
+      <div class="row">
+        <button class="b s m" onclick="regenWeek()">🔄 남은 날 다시 짜기</button>
+        <button class="b s" onclick="window.print()">🖨️ 인쇄</button>
+      </div>
+    </div>
+    <div class="legend"><span>🏠 집에서 먹는 식사 (자동 추천)</span><span>🏫 어린이집 식단</span><span>🔄 다른 메뉴로 바꾸기</span><span>📋 직접 고르기</span><span>✏️ 어린이집 식단 입력/수정</span></div>
+    <div class="tip">👶 <b>19개월 식단 기준</b> · 집 식단은 같은 날 어린이집 점심의 주 단백질(소·돼지·닭·생선·해물)과 겹치지 않게, 최근 4일 안에 먹은 메뉴는 피하고, 냉장고에 있는(특히 유통기한 임박) 재료를 우선 사용해요. 간은 최소로, 고기·면은 잘게 잘라 주세요.</div>
+    <div class="week" id="weekGrid"></div>
+  </div>
+</section>
+
+<!-- 장보기 -->
+<section id="tab-shop">
+  <div class="card">
+    <h2>🛒 이번 주 장보기 목록</h2>
+    <div class="muted" style="margin-bottom:10px">오늘부터 이번 주 일요일까지 집 식단에 필요한데 냉장고에 없는 재료예요. <b>🧊 넣기</b>를 누르면 구매 후 바로 냉장고에 등록됩니다.</div>
+    <div id="shopList"></div>
+  </div>
+</section>
+
+<!-- 설정 -->
+<section id="tab-set">
+  <div class="grid2">
+    <div class="card">
+      <h2>👶 아이 정보</h2>
+      <label class="muted">이름</label><br><input id="sName" style="width:100%" oninput="saveSet()"><br><br>
+      <label class="muted">생년월일 (입력하면 개월 수 자동 계산)</label><br><input id="sBirth" type="date" style="width:100%" onchange="saveSet()"><br><br>
+      <label class="row"><input type="checkbox" id="sSat" onchange="saveSet();regenWeek(true)"> 토요일에도 어린이집 등원해요</label><br>
+      <label class="muted">유통기한 "임박" 기준</label><br>
+      <select id="sWarn" onchange="saveSet();renderAll()"><option value="1">1일 이내</option><option value="2">2일 이내</option><option value="3">3일 이내</option><option value="5">5일 이내</option></select>
+      <h3>🚫 알레르기 / 제외 식품</h3>
+      <div class="muted" style="margin-bottom:6px">체크한 식품이 들어간 메뉴는 추천에서 빠져요.</div>
+      <div class="alg" id="sAlg"></div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>🏫 어린이집 식단 입력</h2>
+        <div class="muted" style="margin-bottom:8px">11월 한울어린이집 식단은 이미 들어가 있어요. 12월부터는 날짜를 골라 입력하면 집 식단이 자동으로 피해서 짜여요.</div>
+        <div class="row"><input type="date" id="dcDate"><button class="b m" onclick="editDC(document.getElementById('dcDate').value)">입력/수정</button></div>
+      </div>
+      <div class="card">
+        <h2>🔔 알림 & 백업</h2>
+        <div class="row" style="margin-bottom:8px"><button class="b" onclick="askNotify()">브라우저 알림 켜기</button><span class="muted" id="notiState"></span></div>
+        <div class="muted" style="margin-bottom:10px">이 페이지를 열 때 하루 1번, 임박·지난 재료를 알림으로 알려줘요.</div>
+        <div class="row"><button class="b" onclick="exportData()">💾 백업 내보내기</button><label class="b" style="cursor:pointer">📂 백업 불러오기<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label></div>
+        <div class="muted" style="margin-top:10px">데이터는 이 브라우저에 저장돼요. 다른 기기로 옮길 때는 백업 파일을 사용하세요.</div>
+        <div class="row" style="margin-top:12px"><button class="b s" onclick="loadSample()">예시 재료 넣어보기</button><button class="b s" style="color:var(--red)" onclick="resetAll()">전체 초기화</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<datalist id="dlNames"></datalist>
+<div id="modal" onclick="if(event.target.id==='modal')closeModal()"><div class="box" id="mbox"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ================= 기본 데이터 ================= */
+// 한울어린이집 11월 급·간식 식단 (0-2세) — 알레르기 번호 제외
+const DC = {
+'2026-11-02':{am:'호상요구르트',lunch:'수수밥, 근대맑은국, 소불고기, 애호박나물, 배추김치',pm:'찐감자, 결명자차'},
+'2026-11-03':{am:'배, 우유',lunch:'흑미밥, 돈육청국장국, 달걀말이, 느타리버섯볶음, 배추김치',pm:'치즈주먹밥'},
+'2026-11-04':{am:'양파스프',lunch:'소고기볶음밥, 우동국, 도토리묵무침, 배추김치, 바나나1/3',pm:'롤빵, 우유'},
+'2026-11-05':{am:'데친당근, 치즈',lunch:'흑미밥, 시금치된장국, 생선가스, 가지무침, 배추김치',pm:'수제비'},
+'2026-11-06':{am:'귤',lunch:'찹쌀현미밥, 시래기된장국, 돼지고기수육, 양배추숙쌈*쌈장, 깍두기',pm:'휘낭시에, 우유'},
+'2026-11-07':{am:'김가루죽',lunch:'삼색나물(시금치,당근,양파)비빔밥, 유부맑은국, 배추김치',pm:''},
+'2026-11-09':{am:'쌀떡뻥, 우유',lunch:'기장밥, 콩나물국, 순살찜닭, 깻잎나물, 배추김치',pm:'찐고구마, 우엉차'},
+'2026-11-10':{am:'단감, 우유',lunch:'수수밥, 무채국, 두부네모스테이크*소스, 어묵볶음, 배추김치',pm:'알리오올리오'},
+'2026-11-11':{am:'사과',lunch:'(생일잔치) 백미밥, 소고기미역국, 돈가스, 실파국, 양상추샐러드, 깍두기',pm:'롤케이크, 우유'},
+'2026-11-12':{am:'파프리카, 치즈',lunch:'차조밥, 닭곰탕, 두부두루치기, 잔멸치볶음, 배추김치',pm:'채식잡채'},
+'2026-11-13':{am:'파인애플',lunch:'현미밥, 배추맑은국, 소고기사태찜, 탕평채, 깍두기',pm:'치즈빵, 우유'},
+'2026-11-14':{am:'오이',lunch:'잔치국수, 애호박전, 배추김치',pm:''},
+'2026-11-16':{am:'호상요구르트',lunch:'흑미밥, 백순두부찌개, 자른메추리알조림, 미역줄기볶음, 배추김치',pm:'찐단호박, 보리차'},
+'2026-11-17':{am:'키위, 우유',lunch:'기장밥, 우거지된장국, 돈육숙주볶음, 참나물무침, 깍두기',pm:'찐만두'},
+'2026-11-18':{am:'양송이스프',lunch:'소고기뿌리채소(연근,당근)영양밥*양념장, 실파국, 동그랑땡, 오이무침, 배추김치',pm:'후레쉬번, 우유'},
+'2026-11-19':{am:'자른토마토, 치즈',lunch:'차조밥, 다시마맑은국, 닭바싹구이, 청경채나물, 깍두기',pm:'볶음우동'},
+'2026-11-20':{am:'바나나',lunch:'찹쌀현미밥, 육개장, 두부조림, 감자채볶음, 배추김치',pm:'모닝빵, 우유'},
+'2026-11-21':{am:'쌀떡뻥, 현미차',lunch:'해물볶음밥, 미소장국, 배추김치',pm:''},
+'2026-11-23':{am:'쌀떡뻥, 우유',lunch:'차조밥, 미역국, 오리양파볶음, 콩나물무침, 배추김치',pm:'찐고구마, 옥수수차'},
+'2026-11-24':{am:'귤, 우유',lunch:'현미밥, 팽이버섯맑은국, 가자미데리야끼조림, 시금치나물, 깍두기',pm:'들깨칼국수'},
+'2026-11-25':{am:'누룽지죽',lunch:'마파두부덮밥, 스크램블에그, 김자반, 배추김치',pm:'구운도넛, 우유'},
+'2026-11-26':{am:'데친브로콜리, 치즈',lunch:'수수밥, 얼갈이된장국, 소고기대파볶음, 우엉깨소스무침, 깍두기',pm:'모둠어묵탕'},
+'2026-11-27':{am:'사과',lunch:'기장밥, 갈은황태국, 돈육살구이, 치커리배무침, 배추김치',pm:'마들렌, 우유'},
+'2026-11-28':{am:'두유미숫가루',lunch:'오므라이스, 부추장국, 배추김치',pm:''},
+'2026-11-30':{am:'호상요구르트',lunch:'찹쌀현미밥, 소고기무국, 두부구이*양념장, 비타민나물, 배추김치',pm:'찐감자, 메밀차'}
+};
+
+// 집 메뉴 (19개월, 저염·부드러운 조리 기준)  t: b=아침, m=점심/저녁, s=간식
+const R = [
+{n:'소고기 애호박 진밥죽',t:'b',i:['소고기','애호박','쌀']},
+{n:'닭고기 채소죽',t:'b',i:['닭고기','당근','양파','쌀']},
+{n:'달걀 채소죽',t:'b',i:['달걀','당근','애호박','쌀']},
+{n:'흰살생선 무죽',t:'b',i:['대구','무','쌀']},
+{n:'단호박 찹쌀죽',t:'b',i:['단호박','쌀']},
+{n:'두부 채소덮밥',t:'b',i:['두부','당근','양파','쌀']},
+{n:'부드러운 달걀찜 · 진밥 · 김',t:'b',i:['달걀','김','쌀']},
+{n:'아기 프렌치토스트 · 바나나',t:'b',i:['식빵','달걀','우유','바나나']},
+{n:'오트밀 바나나 우유죽',t:'b',i:['오트밀','우유','바나나']},
+{n:'소고기 주먹밥 · 미역국',t:'b',i:['소고기','미역','쌀']},
+{n:'김 주먹밥 · 달걀국',t:'b',i:['김','달걀','쌀']},
+{n:'감자 수프 · 모닝빵',t:'b',i:['감자','우유','양파','모닝빵']},
+{n:'브로콜리 치즈 오믈렛 · 진밥',t:'b',i:['달걀','브로콜리','치즈','쌀']},
+{n:'연어 주먹밥 · 맑은 무국',t:'b',i:['연어','김','무','쌀']},
+{n:'고구마 우유죽',t:'b',i:['고구마','우유','쌀']},
+{n:'닭안심 주먹밥 · 애호박국',t:'b',i:['닭고기','당근','애호박','쌀']},
+{n:'시금치 달걀 볶음밥',t:'b',i:['시금치','달걀','쌀']},
+{n:'두부 스크램블 · 진밥',t:'b',i:['두부','양파','쌀']},
+{n:'소고기 콩나물 무른 비빔밥',t:'b',i:['소고기','콩나물','당근','쌀']},
+
+{n:'소고기 미역국 · 감자채볶음 · 진밥',t:'m',i:['소고기','미역','감자','쌀']},
+{n:'소고기 채소덮밥 · 배추된장국',t:'m',i:['소고기','양파','당근','배추','된장','쌀']},
+{n:'소고기 무국 · 브로콜리 두부무침',t:'m',i:['소고기','무','브로콜리','두부','쌀']},
+{n:'소고기 가지볶음 · 콩나물국',t:'m',i:['소고기','가지','콩나물','쌀']},
+{n:'아기 함박스테이크 · 양배추 수프',t:'m',i:['소고기','돼지고기','양파','양배추','달걀']},
+{n:'닭고기 감자조림 · 애호박국',t:'m',i:['닭고기','감자','당근','애호박','쌀']},
+{n:'닭안심 채소볶음밥 · 맑은 무국',t:'m',i:['닭고기','파프리카','양파','무','쌀']},
+{n:'저염 닭곰탕 · 시금치나물',t:'m',i:['닭고기','시금치','쌀']},
+{n:'닭고기 크림 리조또 · 찐 브로콜리',t:'m',i:['닭고기','우유','브로콜리','양파','쌀']},
+{n:'돼지고기 애호박볶음 · 달걀국',t:'m',i:['돼지고기','애호박','달걀','쌀']},
+{n:'사과 돼지불고기 · 무나물 · 미역국',t:'m',i:['돼지고기','사과','무','미역','쌀']},
+{n:'돼지고기 콩나물밥 · 순한 양념장',t:'m',i:['돼지고기','콩나물','쌀']},
+{n:'대구살 채소전 · 맑은 콩나물국',t:'m',i:['대구','애호박','달걀','콩나물','쌀']},
+{n:'아기 연어 크림파스타',t:'m',i:['연어','우유','양파','브로콜리','파스타']},
+{n:'삼치구이(가시 제거) · 감자국',t:'m',i:['삼치','감자','쌀']},
+{n:'흰살생선 무조림 · 시금치된장국',t:'m',i:['대구','무','시금치','된장','쌀']},
+{n:'두부 스테이크 · 들깨 미역국',t:'m',i:['두부','당근','양파','미역','들깨','쌀']},
+{n:'순두부 달걀탕 · 브로콜리무침',t:'m',i:['순두부','달걀','브로콜리','쌀']},
+{n:'새우 채소볶음밥 · 맑은 미역국',t:'m',i:['새우','양파','당근','미역','쌀']},
+{n:'달걀 채소덮밥 · 감자국',t:'m',i:['달걀','양파','당근','감자','쌀']},
+{n:'토마토 달걀볶음 · 두부 맑은국',t:'m',i:['토마토','달걀','두부','쌀']},
+{n:'소고기 표고 진밥 · 오이무침(저염)',t:'m',i:['소고기','버섯','오이','쌀']},
+{n:'단호박 닭고기조림 · 배춧국',t:'m',i:['닭고기','단호박','배추','쌀']},
+{n:'순한 아기 소고기카레',t:'m',i:['소고기','감자','당근','양파','쌀']},
+{n:'순한 아기 짜장밥(돼지고기)',t:'m',i:['돼지고기','감자','양파','애호박','쌀']},
+{n:'소고기 우동(짧게 잘라서)',t:'m',i:['소고기','우동면','애호박','양파']},
+{n:'메추리알 장조림(저염) · 시금치국',t:'m',i:['메추리알','시금치','쌀']},
+{n:'닭고기 크림스튜 · 모닝빵',t:'m',i:['닭고기','감자','당근','우유','모닝빵']},
+{n:'고구마 소고기 진밥 · 배춧국',t:'m',i:['소고기','고구마','배추','쌀']},
+{n:'돼지고기 배추찜 · 달걀국',t:'m',i:['돼지고기','배추','달걀','쌀']},
+{n:'연어 감자 그라탕 · 진밥',t:'m',i:['연어','감자','치즈','쌀']},
+{n:'오리고기 채소볶음 · 된장국',t:'m',i:['오리고기','양파','당근','된장','쌀']},
+{n:'두부 소고기 동그랑땡 · 애호박국',t:'m',i:['소고기','두부','달걀','애호박','쌀']},
+{n:'닭가슴살 양배추 덮밥 · 맑은 무국',t:'m',i:['닭고기','양배추','무','쌀']},
+{n:'대구 맑은탕 · 달걀말이',t:'m',i:['대구','무','달걀','쌀']},
+{n:'소고기 브로콜리볶음 · 두부된장국',t:'m',i:['소고기','브로콜리','두부','된장','쌀']},
+
+{n:'바나나 · 플레인 요거트',t:'s',i:['바나나','요거트']},
+{n:'찐 고구마 · 우유',t:'s',i:['고구마','우유']},
+{n:'사과 (얇게 썰어서)',t:'s',i:['사과']},
+{n:'찐 단호박',t:'s',i:['단호박']},
+{n:'아기 치즈 · 쌀과자',t:'s',i:['치즈','쌀과자']},
+{n:'감자 치즈볼',t:'s',i:['감자','치즈']},
+{n:'바나나 팬케이크',t:'s',i:['바나나','달걀','밀가루']},
+{n:'배숙 (꿀 없이)',t:'s',i:['배']},
+{n:'블루베리 요거트',t:'s',i:['블루베리','요거트']},
+{n:'고구마 스틱',t:'s',i:['고구마']},
+{n:'귤 (속껍질 벗겨서)',t:'s',i:['귤']},
+{n:'딸기 (잘게)',t:'s',i:['딸기']},
+{n:'찐 브로콜리 · 치즈',t:'s',i:['브로콜리','치즈']},
+{n:'두유 · 떡뻥',t:'s',i:['두유','떡뻥']},
+{n:'키위',t:'s',i:['키위']},
+{n:'아보카도 바나나 스무디',t:'s',i:['아보카도','바나나','우유']},
+{n:'단감 (얇게)',t:'s',i:['단감']},
+{n:'찐 감자',t:'s',i:['감자']},
+{n:'미니 계란빵',t:'s',i:['달걀','밀가루','우유']},
+{n:'오트밀 바나나 쿠키(무설탕)',t:'s',i:['오트밀','바나나']}
+];
+
+// 재료 인식용 별칭
+const ALIAS = {
+'소고기':['소고기','쇠고기','소불고기','사태','한우','우둔','홍두깨'],
+'돼지고기':['돼지','돈육','돈가스','수육','동그랑땡','삼겹','목살','앞다리'],
+'닭고기':['닭','치킨'],
+'오리고기':['오리'],
+'달걀':['달걀','계란','에그','오므라이스'],
+'메추리알':['메추리알'],
+'대구':['대구'],'연어':['연어'],'삼치':['삼치'],
+'생선류':['생선','가자미','멸치','황태','어묵','고등어'],
+'새우':['새우','해물'],
+'두부':['두부','유부'],'순두부':['순두부'],
+'무':['무국','무채','무나물','무조림','소고기무'],
+'배추':['배추맑은','배춧국','배추국','배추찜','배추된장'],
+'김':['김','김가루','김자반'],
+'버섯':['버섯','느타리','팽이','표고','양송이'],
+'요거트':['요거트','요구르트'],
+'배':['배'],'귤':['귤']
+};
+const PROT = {'소고기':'beef','돼지고기':'pork','닭고기':'chicken','오리고기':'duck','대구':'fish','연어':'fish','삼치':'fish','생선류':'fish','새우':'shrimp','두부':'tofu','순두부':'tofu','달걀':'egg','메추리알':'egg'};
+const PLABEL = {beef:'소고기',pork:'돼지고기',chicken:'닭고기',duck:'오리',fish:'생선',shrimp:'해물',tofu:'두부',egg:'달걀'};
+const MAJOR = ['beef','pork','chicken','duck','fish','shrimp'];
+const DT = ['미역국','된장국','무국','콩나물국','달걀국','볶음밥','덮밥','국수','우동','칼국수','스프','수프','죽','카레','짜장','리조또','파스타','스테이크'];
+const ALLERGENS = ['','난류','우유','메밀','땅콩','대두','밀','고등어','게','새우','돼지고기','복숭아','토마토','아황산','호두','닭고기','쇠고기','오징어','조개류','잣'];
+const ALG = {'달걀':[1],'메추리알':[1],'우유':[2],'치즈':[2],'요거트':[2],'식빵':[6,2],'모닝빵':[6,2],'파스타':[6],'우동면':[6],'밀가루':[6],'된장':[5],'두부':[5],'순두부':[5],'두유':[5],'돼지고기':[10],'닭고기':[15],'소고기':[16],'새우':[9],'토마토':[12]};
+
+// 품목별 [분류, 기본 보관장소, 냉장/실온 보관일, 냉동 보관일]
+const SHELF = {
+'우유':['유제품','냉장',7,0],'요거트':['유제품','냉장',10,0],'요구르트':['유제품','냉장',10,0],'치즈':['유제품','냉장',30,0],'버터':['유제품','냉장',60,180],'두유':['유제품','실온',90,0],
+'달걀':['달걀·두부','냉장',21,0],'계란':['달걀·두부','냉장',21,0],'메추리알':['달걀·두부','냉장',14,0],'두부':['달걀·두부','냉장',5,0],'순두부':['달걀·두부','냉장',5,0],
+'소고기':['육류','냉장',3,60],'한우':['육류','냉장',3,60],'다짐육':['육류','냉장',2,60],'돼지고기':['육류','냉장',3,60],'닭고기':['육류','냉장',2,60],'닭안심':['육류','냉장',2,60],'닭가슴살':['육류','냉장',2,60],'오리고기':['육류','냉장',3,60],
+'대구':['해산물','냉장',2,60],'연어':['해산물','냉장',2,60],'삼치':['해산물','냉장',2,60],'새우':['해산물','냉동',90,90],'멸치':['해산물','냉장',60,180],
+'애호박':['채소','냉장',7,30],'당근':['채소','냉장',14,60],'양파':['채소','실온',30,60],'감자':['채소','실온',30,0],'고구마':['채소','실온',21,60],'단호박':['채소','냉장',14,60],'브로콜리':['채소','냉장',5,60],'시금치':['채소','냉장',4,60],'배추':['채소','냉장',14,0],'양배추':['채소','냉장',14,0],'무':['채소','냉장',14,0],'콩나물':['채소','냉장',3,0],'버섯':['채소','냉장',5,30],'표고버섯':['채소','냉장',7,30],'가지':['채소','냉장',5,0],'오이':['채소','냉장',5,0],'파프리카':['채소','냉장',7,30],'토마토':['채소','냉장',7,0],'대파':['채소','냉장',10,60],
+'바나나':['과일','실온',5,30],'사과':['과일','냉장',21,0],'배':['과일','냉장',21,0],'귤':['과일','실온',10,0],'딸기':['과일','냉장',3,60],'블루베리':['과일','냉장',5,90],'키위':['과일','냉장',10,0],'단감':['과일','냉장',10,0],'아보카도':['과일','실온',4,0],
+'식빵':['빵·곡류','실온',4,30],'모닝빵':['빵·곡류','실온',3,30],'오트밀':['빵·곡류','실온',180,0],'우동면':['빵·곡류','냉장',10,90],'파스타':['빵·곡류','실온',365,0],'밀가루':['빵·곡류','실온',180,0],
+'떡뻥':['간식','실온',90,0],'쌀과자':['간식','실온',90,0],
+'미역':['건어물·양념','실온',180,0],'김':['건어물·양념','실온',90,0],'된장':['건어물·양념','냉장',180,0],'들깨':['건어물·양념','냉장',90,0],
+'이유식 큐브':['이유식','냉동',30,30],'육수':['이유식','냉동',30,30],'아기 반찬':['이유식','냉장',3,30]
+};
+const CAT_EMO = {'유제품':'🥛','달걀·두부':'🥚','육류':'🥩','해산물':'🐟','채소':'🥦','과일':'🍎','빵·곡류':'🍞','간식':'🍪','건어물·양념':'🧂','이유식':'🍼','기타':'📦'};
+const QUICK = ['우유','요거트','치즈','달걀','두부','소고기','닭고기','돼지고기','대구','연어','애호박','당근','양파','감자','고구마','브로콜리','시금치','바나나','사과','귤','딸기','식빵','이유식 큐브'];
+
+/* ================= 상태 ================= */
+const KEY = 'babyFridgeDashboard_v1';
+let S = load();
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s)return Object.assign(defState(),s);}catch(e){}
+  return defState();
+}
+function defState(){return {items:[],plans:{},dcEdit:{},shopChecked:{},settings:{name:'우리 아기',birth:'',satAttend:false,warn:3,allergies:[]},lastNotify:''};}
+function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+
+/* ================= 날짜 유틸 ================= */
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d);};
+const today=()=>ymd(new Date());
+const diff=(a,b)=>Math.round((parse(b)-parse(a))/86400000);
+const mondayOf=s=>addDays(s,-((parse(s).getDay()+6)%7));
+const WD=['일','월','화','수','목','금','토'];
+const md=s=>{const d=parse(s);return `${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ================= 냉장고 ================= */
+function lookup(name){
+  name=(name||'').trim(); if(!name) return null;
+  if(SHELF[name]) return name;
+  let best=null;
+  for(const k of Object.keys(SHELF)){
+    if(k.length===1){ if(name===k||name.startsWith(k+' ')) best=best||k; continue; }
+    if(name.includes(k) && (!best||k.length>best.length)) best=k;
+  }
+  return best;
+}
+function defaultExp(name,loc){
+  const k=lookup(name); if(!k) return addDays(today(),loc==='냉동'?30:7);
+  const [,,d,f]=SHELF[k]; return addDays(today(),loc==='냉동'&&f?f:d);
+}
+function daysLeft(it){return diff(today(),it.exp);}
+function status(d){const w=+S.settings.warn;return d<0?'expired':d<=w?'soon':d<=7?'week':'ok';}
+function ddText(d){return d<0?`${-d}일 지남`:d===0?'오늘까지':`D-${d}`;}
+
+let fLoc='냉장', expTouched=false, locFilter='전체';
+function initForm(){
+  const nm=document.getElementById('fName'), ex=document.getElementById('fExp');
+  nm.addEventListener('input',()=>autoFill());
+  nm.addEventListener('keydown',e=>{if(e.key==='Enter')addFromForm();});
+  ex.addEventListener('change',()=>{expTouched=true;});
+  ex.addEventListener('keydown',e=>{if(e.key==='Enter')addFromForm();});
+  document.querySelectorAll('#fLoc button').forEach(b=>b.onclick=()=>{fLoc=b.dataset.v;document.querySelectorAll('#fLoc button').forEach(x=>x.classList.toggle('on',x===b));if(!expTouched)autoFill(true);});
+  document.getElementById('dlNames').innerHTML=Object.keys(SHELF).map(k=>`<option value="${k}">`).join('');
+  document.getElementById('quickChips').innerHTML=QUICK.map(q=>`<span class="chip" onclick="quick('${q}')">${CAT_EMO[SHELF[q][0]]} ${q}</span>`).join('');
+}
+function autoFill(keepLoc){
+  const name=document.getElementById('fName').value, k=lookup(name), hint=document.getElementById('fHint');
+  if(k){
+    if(!keepLoc){fLoc=SHELF[k][1];document.querySelectorAll('#fLoc button').forEach(x=>x.classList.toggle('on',x.dataset.v===fLoc));}
+    if(!expTouched) document.getElementById('fExp').value=defaultExp(name,fLoc);
+    const f=SHELF[k][3];
+    hint.textContent=`✅ '${k}' 인식 → ${SHELF[k][0]} · ${fLoc} 보관 기준 유통기한 자동 입력 (${diff(today(),document.getElementById('fExp').value)}일)${f&&fLoc!=='냉동'?` · 냉동하면 약 ${f}일 보관 가능`:''}`;
+  } else if(name){ if(!expTouched) document.getElementById('fExp').value=defaultExp(name,fLoc); hint.textContent='ℹ️ 처음 보는 재료예요. 기본 7일(냉동 30일)로 입력했어요. 필요하면 날짜를 바꿔주세요.'; }
+}
+function quick(n){expTouched=false;document.getElementById('fName').value=n;autoFill();document.getElementById('fExp').focus();}
+function setExp(n){document.getElementById('fExp').value=addDays(today(),n);expTouched=true;autoFill(true);}
+function addFromForm(){
+  const name=document.getElementById('fName').value.trim(); if(!name){toast('재료 이름을 입력해 주세요');return;}
+  let exp=document.getElementById('fExp').value||defaultExp(name,fLoc);
+  const k=lookup(name);
+  S.items.push({id:Date.now()+''+Math.random().toString(36).slice(2,5),name,qty:+document.getElementById('fQty').value||1,unit:document.getElementById('fUnit').value,loc:fLoc,exp,cat:k?SHELF[k][0]:'기타',added:today()});
+  save();toast(`${name} 추가됨 (${ddText(diff(today(),exp))})`);
+  document.getElementById('fName').value='';document.getElementById('fQty').value=1;document.getElementById('fExp').value='';expTouched=false;
+  document.getElementById('fHint').textContent='💡 이름만 입력하고 Enter → 유통기한 자동 입력';
+  document.getElementById('fName').focus();renderAll();
+}
+function addQuickItem(name){
+  const k=lookup(name),loc=k?SHELF[k][1]:'냉장';
+  S.items.push({id:Date.now()+''+Math.random().toString(36).slice(2,5),name,qty:1,unit:'개',loc,exp:defaultExp(name,loc),cat:k?SHELF[k][0]:'기타',added:today()});
+  save();toast(`🧊 ${name} 냉장고에 추가`);renderAll();
+}
+function useOne(id){const it=S.items.find(x=>x.id===id);if(!it)return;it.qty=Math.round((it.qty-1)*10)/10;if(it.qty<=0){S.items=S.items.filter(x=>x.id!==id);toast(`${it.name} 다 먹었어요 👏`);}save();renderAll();}
+function delItem(id){const it=S.items.find(x=>x.id===id);S.items=S.items.filter(x=>x.id!==id);save();renderAll();toast(`${it?it.name:''} 삭제됨`);}
+function editItem(id){
+  const it=S.items.find(x=>x.id===id);if(!it)return;
+  openModal(`<h2>✏️ ${esc(it.name)} 수정</h2>
+   <label>이름</label><input id="eN" value="${esc(it.name)}">
+   <label>수량</label><div class="row"><input id="eQ" type="number" step="0.5" value="${it.qty}" style="flex:1"><input id="eU" value="${esc(it.unit)}" style="width:80px"></div>
+   <label>보관 장소</label><select id="eL">${['냉장','냉동','실온'].map(l=>`<option ${l===it.loc?'selected':''}>${l}</option>`).join('')}</select>
+   <label>유통기한</label><input id="eE" type="date" value="${it.exp}">
+   <div class="muted" style="margin-top:6px">${it.loc!=='냉동'?'💡 냉동실로 옮기면 아래 버튼으로 기한을 늘릴 수 있어요.':''}</div>
+   <div class="row" style="margin-top:14px;justify-content:space-between">
+     <button class="b" onclick="freezeItem('${id}')">❄️ 냉동실로 옮기기</button>
+     <div class="row"><button class="b" onclick="closeModal()">취소</button><button class="b p" onclick="saveItem('${id}')">저장</button></div></div>`);
+}
+function saveItem(id){const it=S.items.find(x=>x.id===id);it.name=v('eN');it.qty=+v('eQ');it.unit=v('eU');it.loc=v('eL');it.exp=v('eE');save();closeModal();renderAll();}
+function freezeItem(id){const it=S.items.find(x=>x.id===id);const k=lookup(it.name);const f=k&&SHELF[k][3]?SHELF[k][3]:30;it.loc='냉동';it.exp=addDays(today(),f);save();closeModal();renderAll();toast(`❄️ ${it.name} 냉동 → ${f}일 보관`);}
+const v=id=>document.getElementById(id).value;
+function setFilter(f){locFilter=f;renderFridge();}
+
+function renderFridge(){
+  const q=(document.getElementById('fSearch').value||'').trim();
+  const all=S.items.slice().sort((a,b)=>a.exp.localeCompare(b.exp));
+  const cnt={expired:0,soon:0};all.forEach(it=>{const s=status(daysLeft(it));if(cnt[s]!==undefined)cnt[s]++;});
+  document.getElementById('fStat').innerHTML=`
+   <div onclick="setFilter('전체')"><b>${all.length}</b><span class="muted">전체</span></div>
+   <div onclick="setFilter('alert')" style="background:var(--red2)"><b style="color:var(--red)">${cnt.expired}</b><span class="muted">기한 지남</span></div>
+   <div onclick="setFilter('alert')" style="background:var(--org2)"><b style="color:var(--org)">${cnt.soon}</b><span class="muted">${S.settings.warn}일 이내 임박</span></div>`;
+  const fl=['전체','alert','냉장','냉동','실온'];
+  document.getElementById('locFilter').innerHTML=fl.map(f=>`<span class="chip ${f===locFilter?'on':''}" onclick="setFilter('${f}')">${f==='alert'?'⚠️ 임박/지남':f==='냉장'?'🧊 냉장':f==='냉동'?'❄️ 냉동':f==='실온'?'🏠 실온':'전체'}</span>`).join('');
+  let list=all.filter(it=>locFilter==='전체'||(locFilter==='alert'?['expired','soon'].includes(status(daysLeft(it))):it.loc===locFilter));
+  if(q) list=list.filter(it=>it.name.includes(q));
+  document.getElementById('fList').innerHTML=list.length?list.map(itemHTML).join(''):`<div class="empty">${S.items.length?'조건에 맞는 재료가 없어요':'냉장고가 비어 있어요 🙂<br>위에서 재료를 추가하거나 <a href="#" onclick="loadSample();return false">예시 재료</a>를 넣어보세요.'}</div>`;
+}
+function itemHTML(it){
+  const d=daysLeft(it),s=status(d);
+  return `<div class="it ${s}"><div class="em">${CAT_EMO[it.cat]||'📦'}</div>
+   <div class="nm"><b>${esc(it.name)}</b><span>${it.loc} · ${it.qty}${esc(it.unit)} · ~${it.exp.slice(5).replace('-','/')}</span></div>
+   <span class="dd ${s}">${ddText(d)}</span>
+   <div class="ac"><button title="1개 사용" onclick="useOne('${it.id}')">−1</button><button title="수정" onclick="editItem('${it.id}')">✏️</button><button title="삭제" onclick="delItem('${it.id}')">🗑️</button></div></div>`;
+}
+
+/* ================= 식단 엔진 ================= */
+const ALL_ING=[...new Set([...R.flatMap(r=>r.i),...Object.keys(ALIAS)])].filter(x=>x!=='쌀');
+function tokens(t){return (t||'').split(/[,·\/\n]/).map(x=>x.replace(/[①-⑳0-9*]/g,'').trim()).filter(Boolean);}
+function detectIng(text){
+  const tk=tokens(text),out=new Set();
+  for(const ing of ALL_ING){for(const a of (ALIAS[ing]||[ing])){
+    if(a.length===1?tk.some(t=>t===a):tk.some(t=>t.includes(a))){out.add(ing);break;}
+  }}
+  return [...out];
+}
+const protOf=ings=>[...new Set(ings.map(i=>PROT[i]).filter(Boolean))];
+const dishOf=t=>DT.filter(d=>(t||'').includes(d)).map(d=>d==='수프'?'스프':d);
+function getDC(d){return S.dcEdit[d]||DC[d]||null;}
+function allergic(r){return r.i.some(x=>(ALG[x]||[]).some(n=>S.settings.allergies.includes(n)));}
+
+function itemMatches(ing,it){
+  const n=it.name;
+  if(lookup(n)===ing) return true;
+  const al=(ALIAS[ing]||[ing]).filter(a=>a.length>1);
+  if(ing.length>1&&n.includes(ing)) return true;
+  return al.some(a=>n.includes(a));
+}
+function fridgeState(ing){
+  const its=S.items.filter(it=>daysLeft(it)>=0&&itemMatches(ing,it));
+  if(!its.length) return null;
+  const m=Math.min(...its.map(daysLeft));
+  return {soon:m<=+S.settings.warn,d:m};
+}
+
+function slotsFor(d){
+  const w=parse(d).getDay();
+  const dcDay=(w>=1&&w<=5)||(w===6&&S.settings.satAttend);
+  if(dcDay) return [
+    {k:'b',label:'아침',src:'home',t:'b'},
+    {k:'am',label:'오전간식',src:'dc'},
+    {k:'lunch',label:'점심',src:'dc'},
+    {k:'pm',label:'오후간식',src:w===6?'home':'dc',t:'s'},
+    {k:'dinner',label:'저녁',src:'home',t:'m'}];
+  return [
+    {k:'b',label:'아침',src:'home',t:'b'},
+    {k:'am',label:'오전간식',src:'home',t:'s'},
+    {k:'lunch',label:'점심',src:'home',t:'m'},
+    {k:'pm',label:'오후간식',src:'home',t:'s'},
+    {k:'dinner',label:'저녁',src:'home',t:'m'}];
+}
+function ctxFor(d,plan){
+  const sl=slotsFor(d), dcDay=sl.some(s=>s.src==='dc'), dc=dcDay?getDC(d):null;
+  const lunchIng=dc?detectIng(dc.lunch):[], snackIng=dc?detectIng((dc.am||'')+','+(dc.pm||'')):[];
+  const dayNames=[],dayProt=[];
+  if(plan) for(const s of sl) if(s.src==='home'&&plan[s.k]){const r=R.find(x=>x.n===plan[s.k]);if(r){dayNames.push(r.n);dayProt.push(...protOf(r.i));}}
+  return {dc,lunchIng,lunchProt:protOf(lunchIng),lunchDish:dishOf(dc?dc.lunch:''),snackIng,dayNames,dayProt};
+}
+function recentNames(d,days){
+  const out=[];for(let i=1;i<=days;i++){const p=S.plans[addDays(d,-i)];if(p)Object.keys(p).forEach(k=>{if(k!=='_why')out.push({n:p[k],ago:i});});}
+  for(let i=1;i<=days;i++){const p=S.plans[addDays(d,i)];if(p)Object.keys(p).forEach(k=>{if(k!=='_why')out.push({n:p[k],ago:i});});}
+  return out;
+}
+function score(r,slot,d,ctx){
+  let s=Math.random()*3; const why=[]; const pr=protOf(r.i);
+  if(ctx.dc){
+    const maj=pr.filter(p=>MAJOR.includes(p)&&ctx.lunchProt.includes(p));
+    if(maj.length) s-=100;
+    const mnr=pr.filter(p=>!MAJOR.includes(p)&&ctx.lunchProt.includes(p));
+    s-=6*mnr.length;
+    const io=r.i.filter(x=>x!=='쌀'&&(slot.t==='s'?ctx.snackIng:ctx.lunchIng).includes(x));
+    s-=4*io.length;
+    if(dishOf(r.n).some(x=>ctx.lunchDish.includes(x))) s-=15;
+    const lp=ctx.lunchProt.filter(p=>MAJOR.includes(p));
+    if(lp.length&&slot.t!=='s'&&!maj.length) why.push(`어린이집 점심 ${lp.map(p=>PLABEL[p]).join('·')} → 다른 재료로`);
+  }
+  if(ctx.dayNames.includes(r.n)) s-=60;
+  s-=8*pr.filter(p=>ctx.dayProt.includes(p)).length;
+  for(const h of recentNames(d,4)) if(h.n===r.n) s-=h.ago<=2?40:20;
+  const soon=[],have=[];
+  for(const ing of r.i){if(ing==='쌀')continue;const f=fridgeState(ing);if(f){if(f.soon){s+=10;soon.push(`${ing}(${ddText(f.d)})`);}else{s+=3;have.push(ing);}}}
+  if(soon.length) why.unshift(`🧊 임박 재료 활용: ${soon.join(', ')}`);
+  else if(have.length) why.push(`냉장고 재료: ${have.slice(0,3).join(', ')}`);
+  return {r,s,why};
+}
+function ranked(slot,d,ctx){return R.filter(r=>r.t===slot.t&&!allergic(r)).map(r=>score(r,slot,d,ctx)).sort((a,b)=>b.s-a.s);}
+function genDay(d){
+  const plan={_why:{}};
+  for(const sl of slotsFor(d)){ if(sl.src!=='home')continue;
+    const ctx=ctxFor(d,plan); const top=ranked(sl,d,ctx)[0];
+    if(top){plan[sl.k]=top.r.n;plan._why[sl.k]=top.why.join(' / ');}
+  }
+  return plan;
+}
+function weekDates(m){return [...Array(7)].map((_,i)=>addDays(m,i));}
+function ensureWeek(m){let ch=false;for(const d of weekDates(m)){if(!S.plans[d]||!validPlan(d)){S.plans[d]=genDay(d);ch=true;}}if(ch)save();}
+function validPlan(d){const p=S.plans[d];return slotsFor(d).every(s=>s.src!=='home'||p[s.k]);}
+function regenWeek(silent){for(const d of weekDates(curWeek)){if(d>=today()){delete S.plans[d];}}ensureWeek(curWeek);renderAll();if(silent!==true)toast('🔄 오늘 이후 식단을 다시 짰어요');}
+function reroll(d,k){
+  const sl=slotsFor(d).find(s=>s.k===k), p=S.plans[d], cur=p[k];
+  const tmp=Object.assign({},p);delete tmp[k];
+  const list=ranked(sl,d,ctxFor(d,tmp)).filter(x=>x.r.n!==cur&&x.s>-50).slice(0,5);
+  if(!list.length){toast('다른 후보가 없어요');return;}
+  const pick=list[Math.floor(Math.random()*list.length)];
+  p[k]=pick.r.n;p._why[k]=pick.why.join(' / ');save();renderAll();
+}
+function choose(d,k){
+  const sl=slotsFor(d).find(s=>s.k===k), p=S.plans[d];
+  const tmp=Object.assign({},p);delete tmp[k];
+  const list=ranked(sl,d,ctxFor(d,tmp));
+  openModal(`<h2>📋 ${md(d)} ${sl.label} 메뉴 고르기</h2><div class="muted" style="margin-bottom:10px">위쪽일수록 추천도가 높아요. ⛔는 어린이집 점심과 단백질이 겹치는 메뉴예요.</div>
+   ${list.map(x=>`<div class="cand" onclick="setMenu('${d}','${k}',${R.indexOf(x.r)})">${x.s<=-50?'⛔ ':''}<b>${esc(x.r.n)}</b><small>${esc(x.why.join(' / ')||'재료: '+x.r.i.filter(i=>i!=='쌀').join(', '))}</small></div>`).join('')}
+   <button class="b" style="width:100%;margin-top:6px" onclick="closeModal()">닫기</button>`);
+}
+function setMenu(d,k,idx){const r=R[idx];S.plans[d][k]=r.n;const sl=slotsFor(d).find(s=>s.k===k);const tmp=Object.assign({},S.plans[d]);delete tmp[k];S.plans[d]._why[k]=score(r,sl,d,ctxFor(d,tmp)).why.join(' / ')+' (직접 선택)';save();closeModal();renderAll();}
+function editDC(d){
+  if(!d){toast('날짜를 선택해 주세요');return;}
+  const dc=getDC(d)||{am:'',lunch:'',pm:''};
+  openModal(`<h2>🏫 ${md(d)} 어린이집 식단</h2>
+   <label>오전간식</label><input id="dA" value="${esc(dc.am)}" placeholder="예: 바나나, 우유">
+   <label>점심 (쉼표로 구분)</label><textarea id="dL" rows="3" placeholder="예: 현미밥, 소고기미역국, 두부조림, 배추김치">${esc(dc.lunch)}</textarea>
+   <label>오후간식</label><input id="dP" value="${esc(dc.pm)}" placeholder="예: 찐고구마">
+   <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="b" onclick="closeModal()">취소</button><button class="b p" onclick="saveDC('${d}')">저장 후 집 식단 다시 짜기</button></div>`);
+}
+function saveDC(d){S.dcEdit[d]={am:v('dA'),lunch:v('dL'),pm:v('dP')};delete S.plans[d];save();closeModal();ensureWeek(mondayOf(d));renderAll();toast('저장했어요. 그날 집 식단을 다시 맞췄어요');}
+
+/* ================= 렌더링 ================= */
+let curWeek=mondayOf(today());
+function moveWeek(n){curWeek=addDays(curWeek,n);renderPlan();renderShop();}
+function slotHTML(d,sl){
+  if(sl.src==='dc'){
+    const dc=getDC(d), txt=dc?dc[sl.k]:'';
+    return `<div class="slot dc"><div class="sl">🏫 ${sl.label}</div><div class="sm">${dc?(esc(txt)||'-'):'<span class="muted">식단 미입력</span>'}</div><div class="sa"><button title="어린이집 식단 입력" onclick="editDC('${d}')">✏️</button></div></div>`;
+  }
+  const p=S.plans[d]||{};const why=(p._why||{})[sl.k];
+  return `<div class="slot home"><div class="sl">🏠 ${sl.label}</div><div class="sm">${esc(p[sl.k]||'-')}</div>${why?`<div class="why">${esc(why)}</div>`:''}
+   <div class="sa"><button title="다른 메뉴" onclick="reroll('${d}','${sl.k}')">🔄</button><button title="직접 고르기" onclick="choose('${d}','${sl.k}')">📋</button></div></div>`;
+}
+function renderPlan(){
+  ensureWeek(curWeek);
+  const ds=weekDates(curWeek),t=today();
+  document.getElementById('weekLabel').textContent=`${md(ds[0])} ~ ${md(ds[6])}`;
+  document.getElementById('weekGrid').innerHTML=ds.map(d=>{
+    const w=parse(d).getDay();
+    return `<div class="day ${d===t?'today':''} ${d<t?'past':''}"><div class="dh"><span class="${w===6?'sat':w===0?'sun':''}">${md(d)}</span>${d===t?'<span class="tg">오늘</span>':''}</div>${slotsFor(d).map(sl=>slotHTML(d,sl)).join('')}</div>`;
+  }).join('');
+}
+function renderToday(){
+  const t=today(); ensureWeek(mondayOf(t));
+  document.getElementById('todayTitle').textContent=`🍽️ 오늘 ${md(t)} 식단`;
+  const p=S.plans[t]||{}, dc=getDC(t);
+  document.getElementById('todayMeals').innerHTML=slotsFor(t).map(sl=>{
+    if(sl.src==='dc') return `<div class="tmeal dc"><div class="k">🏫 ${sl.label}</div><div>${dc?esc(dc[sl.k]||'-'):'<span class="muted">어린이집 식단 미입력</span>'}</div></div>`;
+    const why=(p._why||{})[sl.k];
+    return `<div class="tmeal home"><div class="k">🏠 ${sl.label}</div><div style="flex:1"><b>${esc(p[sl.k]||'-')}</b>${why?`<div class="why" style="font-size:12px;color:var(--mint)">${esc(why)}</div>`:''}</div><button class="b s" onclick="reroll('${t}','${sl.k}')">🔄</button></div>`;
+  }).join('');
+  const al=S.items.filter(it=>['expired','soon'].includes(status(daysLeft(it)))).sort((a,b)=>a.exp.localeCompare(b.exp));
+  document.getElementById('todayAlerts').innerHTML=al.length?`<div class="items">${al.map(itemHTML).join('')}</div>`:`<div class="empty">🎉 임박하거나 지난 재료가 없어요</div>`;
+  // 임박 재료 활용 추천
+  const ctx=ctxFor(t,null);
+  const soonIngs=ALL_ING.filter(i=>{const f=fridgeState(i);return f&&f.soon;});
+  let recs=[];
+  if(soonIngs.length){
+    recs=R.filter(r=>r.t!=='s'||true).filter(r=>!allergic(r)&&r.i.some(i=>soonIngs.includes(i)))
+      .filter(r=>!(ctx.dc&&protOf(r.i).some(p=>MAJOR.includes(p)&&ctx.lunchProt.includes(p))))
+      .map(r=>({r,c:r.i.filter(i=>soonIngs.includes(i))})).sort((a,b)=>b.c.length-a.c.length).slice(0,5);
+  }
+  document.getElementById('todayRec').innerHTML=recs.length?recs.map(x=>`<div class="rec"><b>${esc(x.r.n)}</b><span>임박 재료 ${x.c.join(', ')} 사용 · ${x.r.t==='b'?'아침':x.r.t==='m'?'식사':'간식'}</span></div>`).join(''):`<div class="empty">임박 재료가 없어서 추천할 메뉴가 없어요</div>`;
+}
+function renderShop(){
+  const t=today(), ds=weekDates(curWeek).filter(d=>d>=t);
+  ensureWeek(curWeek);
+  const need={};
+  for(const d of ds){const p=S.plans[d]||{};for(const sl of slotsFor(d)){if(sl.src!=='home'||!p[sl.k])continue;const r=R.find(x=>x.n===p[sl.k]);if(!r)continue;
+    for(const i of r.i){if(i==='쌀')continue;if(fridgeState(i))continue;(need[i]=need[i]||[]).push(`${md(d)} ${sl.label}`);}}}
+  const keys=Object.keys(need).sort((a,b)=>need[b].length-need[a].length);
+  document.getElementById('shopList').innerHTML=!ds.length?'<div class="empty">이번 주는 지났어요. 다음 주로 이동해 보세요.</div>':keys.length?keys.map(i=>{
+    const ck=S.shopChecked[curWeek+i];
+    return `<div class="shop ${ck?'done':''}"><input type="checkbox" ${ck?'checked':''} onchange="S.shopChecked['${curWeek}${i}']=this.checked;save();renderShop()"><div class="nm"><b>${i}</b><span>${need[i].slice(0,4).join(', ')}${need[i].length>4?` 외 ${need[i].length-4}`:''}</span></div><button class="b s m" onclick="addQuickItem('${i}')">🧊 넣기</button></div>`;}).join('')
+    :'<div class="empty">🎉 필요한 재료가 모두 냉장고에 있어요</div>';
+}
+function renderAlert(){
+  const ex=S.items.filter(it=>daysLeft(it)<0).length, so=S.items.filter(it=>status(daysLeft(it))==='soon').length;
+  const b=document.getElementById('alertBar');
+  b.className=ex?'bad':so?'warn':'';
+  b.innerHTML=ex||so?`⚠️ ${ex?`유통기한 지난 재료 ${ex}개`:''}${ex&&so?' · ':''}${so?`${S.settings.warn}일 안에 끝나는 재료 ${so}개`:''} <span style="font-weight:400">→ 확인하기</span>`:'';
+  document.title=(ex+so?`(${ex+so}) `:'')+'우리집 냉장고 & 아기 식단';
+}
+function ageText(){
+  const b=S.settings.birth; if(!b) return '19개월';
+  const bd=parse(b),n=new Date(); let m=(n.getFullYear()-bd.getFullYear())*12+n.getMonth()-bd.getMonth(); if(n.getDate()<bd.getDate())m--; return m+'개월';
+}
+function renderHeader(){
+  document.getElementById('hName').textContent=S.settings.name||'우리 아기';
+  document.getElementById('hSub').textContent=`${ageText()} · 냉장고 재료 ${S.items.length}개 · 오늘 ${md(today())}`;
+}
+function renderSettings(){
+  document.getElementById('sName').value=S.settings.name;
+  document.getElementById('sBirth').value=S.settings.birth;
+  document.getElementById('sSat').checked=S.settings.satAttend;
+  document.getElementById('sWarn').value=S.settings.warn;
+  document.getElementById('dcDate').value=today();
+  document.getElementById('sAlg').innerHTML=ALLERGENS.map((a,i)=>i?`<label><input type="checkbox" ${S.settings.allergies.includes(i)?'checked':''} onchange="toggleAlg(${i},this.checked)">${a}</label>`:'').join('');
+  document.getElementById('notiState').textContent='Notification' in window?({granted:'✅ 켜짐',denied:'❌ 차단됨(브라우저 설정에서 허용)',default:'꺼짐'}[Notification.permission]):'이 브라우저는 미지원';
+}
+function saveSet(){S.settings.name=v('sName');S.settings.birth=v('sBirth');S.settings.satAttend=document.getElementById('sSat').checked;S.settings.warn=+v('sWarn');save();renderHeader();}
+function toggleAlg(i,on){const a=S.settings.allergies;if(on&&!a.includes(i))a.push(i);if(!on)S.settings.allergies=a.filter(x=>x!==i);save();regenWeek(true);toast('알레르기 설정 반영 → 남은 식단 다시 짬');}
+function renderAll(){renderHeader();renderAlert();renderFridge();renderToday();renderPlan();renderShop();}
+function go(t){document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='tab-'+t));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='set')renderSettings();window.scrollTo(0,0);}
+
+/* ================= 기타 ================= */
+function openModal(h){document.getElementById('mbox').innerHTML=h;document.getElementById('modal').classList.add('on');}
+function closeModal(){document.getElementById('modal').classList.remove('on');}
+let tt;function toast(m){const e=document.getElementById('toast');e.textContent=m;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2200);}
+function askNotify(){if(!('Notification' in window)){toast('이 브라우저는 알림을 지원하지 않아요');return;}Notification.requestPermission().then(()=>{renderSettings();S.lastNotify='';notifyCheck();});}
+function notifyCheck(){
+  if(!('Notification' in window)||Notification.permission!=='granted'||S.lastNotify===today())return;
+  const al=S.items.filter(it=>['expired','soon'].includes(status(daysLeft(it))));
+  if(!al.length)return;
+  try{new Notification('🧊 냉장고 유통기한 알림',{body:al.slice(0,5).map(it=>`${it.name} ${ddText(daysLeft(it))}`).join('\n')+(al.length>5?`\n외 ${al.length-5}개`:'')});S.lastNotify=today();save();}catch(e){}
+}
+function exportData(){const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`냉장고식단_백업_${today()}.json`;a.click();}
+function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=Object.assign(defState(),JSON.parse(r.result));save();renderAll();renderSettings();toast('백업을 불러왔어요');}catch(e){toast('파일을 읽을 수 없어요');}};r.readAsText(f);}
+function resetAll(){if(confirm('냉장고·식단·설정을 모두 지울까요?')){S=defState();save();renderAll();renderSettings();}}
+function loadSample(){
+  const smp=[['두부','냉장',1],['한우 다짐육','냉장',2],['애호박','냉장',3],['우유','냉장',5],['달걀','냉장',14],['바나나','실온',2],['브로콜리','냉장',-1],['대구살','냉동',40],['당근','냉장',10],['요거트','냉장',6]];
+  smp.forEach(([n,l,d],i)=>{const k=lookup(n);S.items.push({id:'s'+Date.now()+i,name:n,qty:1,unit:'개',loc:l,exp:addDays(today(),d),cat:k?SHELF[k][0]:'기타',added:today()});});
+  save();regenWeek(true);toast('예시 재료를 넣었어요');
+}
+
+initForm();renderAll();notifyCheck();
+</script>
+</body>
+</html>
